@@ -308,18 +308,53 @@ kbd {{
   min-height: 0;
 }}
 
-/* File list */
+/* File tree */
+.aj-tree-dir {{
+  user-select: none;
+}}
+.aj-tree-dir-header {{
+  padding: 3px 0;
+  font-size: 12px;
+  font-family: var(--mono);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--fg-muted);
+  transition: color var(--transition);
+}}
+.aj-tree-dir-header:hover {{
+  color: var(--fg);
+}}
+.aj-tree-chevron {{
+  display: inline-block;
+  width: 12px;
+  font-size: 9px;
+  text-align: center;
+  flex-shrink: 0;
+  transition: transform var(--transition);
+}}
+.aj-tree-dir.collapsed > .aj-tree-children {{
+  display: none;
+}}
+.aj-tree-dir.collapsed > .aj-tree-dir-header .aj-tree-chevron {{
+  transform: rotate(-90deg);
+}}
+.aj-tree-children {{
+  padding-left: 14px;
+}}
 .aj-file-item {{
-  padding: 5px 14px;
+  padding: 3px 0;
   font-size: 12px;
   font-family: var(--mono);
   cursor: pointer;
   border-left: 2px solid transparent;
-  word-break: break-all;
   line-height: 1.5;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 6px;
+  padding-left: 16px;
+  margin-left: -2px;
   transition: background var(--transition), border-color var(--transition);
 }}
 .aj-file-item:hover {{
@@ -329,15 +364,11 @@ kbd {{
   background: var(--active-file-bg);
   border-left-color: var(--active-file-border);
 }}
-.aj-file-path {{
-  flex: 1;
-  min-width: 0;
-}}
-.aj-file-dir {{
-  color: var(--fg-muted);
-}}
 .aj-file-name {{
   color: var(--fg);
+  flex: 1;
+  min-width: 0;
+  word-break: break-all;
 }}
 .aj-file-status {{
   flex-shrink: 0;
@@ -590,7 +621,7 @@ kbd {{
       <h1>{title}</h1>
       <span class="aj-meta">{meta}</span>
       <div class="aj-controls">
-        <span class="aj-keys"><kbd>j</kbd><kbd>k</kbd> nav</span>
+        <span class="aj-keys"><kbd>C-p</kbd><kbd>C-n</kbd> nav</span>
         <button class="aj-btn" id="btn-sidebar" onclick="toggleSidebar()" title="Toggle sidebar (b)">Sidebar</button>
         <button class="aj-btn" id="btn-split" onclick="toggleView()">Split</button>
         <button class="aj-btn" id="btn-theme" onclick="toggleTheme()">Theme</button>
@@ -654,53 +685,115 @@ function render(view) {{
   updateCurrentFile();
 }}
 
-/* === File list sidebar === */
+/* === File tree sidebar === */
 function buildFileList() {{
   const container = document.getElementById('file-list');
   container.innerHTML = '';
+  container.style.padding = '4px 14px';
   const wrappers = document.querySelectorAll('.d2h-file-wrapper');
+
+  // Collect file info
+  const files = [];
   wrappers.forEach((w, i) => {{
     const nameEl = w.querySelector('.d2h-file-name');
     const fullPath = nameEl ? nameEl.textContent.trim() : `File ${{i + 1}}`;
-    const item = document.createElement('div');
-    item.className = 'aj-file-item';
-    item.dataset.index = i;
-
-    // Detect file status from diff2html's tag
     const tagEl = w.querySelector('.d2h-tag');
     const tagText = tagEl ? tagEl.textContent.trim().toUpperCase() : '';
     let statusCode = 'M';
-    let statusLabel = 'M';
-    if (tagText.includes('ADDED') || tagText.includes('NEW')) {{
-      statusCode = 'A'; statusLabel = 'A';
-    }} else if (tagText.includes('DELETED') || tagText.includes('REMOVED')) {{
-      statusCode = 'D'; statusLabel = 'D';
-    }} else if (tagText.includes('RENAMED') || tagText.includes('MOVED')) {{
-      statusCode = 'R'; statusLabel = 'R';
-    }}
-
-    // Build: [path] [status badge]
-    const pathSpan = document.createElement('span');
-    pathSpan.className = 'aj-file-path';
-    const lastSlash = fullPath.lastIndexOf('/');
-    if (lastSlash >= 0) {{
-      pathSpan.innerHTML = '<span class="aj-file-dir">' + fullPath.substring(0, lastSlash + 1) + '</span>'
-        + '<span class="aj-file-name">' + fullPath.substring(lastSlash + 1) + '</span>';
-    }} else {{
-      pathSpan.innerHTML = '<span class="aj-file-name">' + fullPath + '</span>';
-    }}
-    item.appendChild(pathSpan);
-
-    const badge = document.createElement('span');
-    badge.className = 'aj-file-status status-' + statusCode;
-    badge.textContent = statusLabel;
-    item.appendChild(badge);
-
-    item.addEventListener('click', () => {{
-      wrappers[i].scrollIntoView({{ behavior: 'smooth', block: 'start' }});
-    }});
-    container.appendChild(item);
+    if (tagText.includes('ADDED') || tagText.includes('NEW')) statusCode = 'A';
+    else if (tagText.includes('DELETED') || tagText.includes('REMOVED')) statusCode = 'D';
+    else if (tagText.includes('RENAMED') || tagText.includes('MOVED')) statusCode = 'R';
+    files.push({{ path: fullPath, index: i, status: statusCode }});
   }});
+
+  // Build tree structure
+  const root = {{ children: {{}}, files: [] }};
+  files.forEach(f => {{
+    const parts = f.path.split('/');
+    const fileName = parts.pop();
+    let node = root;
+    parts.forEach(p => {{
+      if (!node.children[p]) node.children[p] = {{ children: {{}}, files: [] }};
+      node = node.children[p];
+    }});
+    node.files.push({{ name: fileName, index: f.index, status: f.status }});
+  }});
+
+  // Compress single-child directory chains
+  function compress(node) {{
+    const childKeys = Object.keys(node.children);
+    if (childKeys.length === 1 && node.files.length === 0) {{
+      const key = childKeys[0];
+      const child = node.children[key];
+      const compressed = compress(child);
+      return {{ label: key + (compressed.label ? '/' + compressed.label : ''), node: compressed.node }};
+    }}
+    // Recurse into children
+    const newChildren = {{}};
+    Object.keys(node.children).forEach(k => {{
+      const c = compress(node.children[k]);
+      const label = c.label ? k + '/' + c.label : k;
+      newChildren[label] = c.node;
+    }});
+    node.children = newChildren;
+    return {{ label: '', node }};
+  }}
+
+  // Compress from root's children
+  const compressedChildren = {{}};
+  Object.keys(root.children).forEach(k => {{
+    const c = compress(root.children[k]);
+    const label = k + (c.label ? '/' + c.label : '');
+    compressedChildren[label] = c.node;
+  }});
+  root.children = compressedChildren;
+
+  // Render tree
+  function renderNode(node, parentEl) {{
+    // Sort: files first, then directories
+    const dirKeys = Object.keys(node.children).sort();
+    const sortedFiles = node.files.sort((a, b) => a.name.localeCompare(b.name));
+
+    sortedFiles.forEach(f => {{
+      const item = document.createElement('div');
+      item.className = 'aj-file-item';
+      item.dataset.index = f.index;
+
+      const nameSpan = document.createElement('span');
+      nameSpan.className = 'aj-file-name';
+      nameSpan.textContent = f.name;
+      item.appendChild(nameSpan);
+
+      const badge = document.createElement('span');
+      badge.className = 'aj-file-status status-' + f.status;
+      badge.textContent = f.status;
+      item.appendChild(badge);
+
+      item.addEventListener('click', () => {{
+        wrappers[f.index].scrollIntoView({{ behavior: 'smooth', block: 'start' }});
+      }});
+      parentEl.appendChild(item);
+    }});
+
+    dirKeys.forEach(dirName => {{
+      const dirEl = document.createElement('div');
+      dirEl.className = 'aj-tree-dir';
+
+      const header = document.createElement('div');
+      header.className = 'aj-tree-dir-header';
+      header.innerHTML = '<span class="aj-tree-chevron">&#9660;</span>' + dirName + '/';
+      header.addEventListener('click', () => dirEl.classList.toggle('collapsed'));
+
+      const childrenEl = document.createElement('div');
+      childrenEl.className = 'aj-tree-children';
+      renderNode(node.children[dirName], childrenEl);
+
+      dirEl.appendChild(header);
+      dirEl.appendChild(childrenEl);
+      parentEl.appendChild(dirEl);
+    }});
+  }}
+  renderNode(root, container);
 }}
 
 /* === Current file tracking === */
@@ -788,14 +881,14 @@ document.addEventListener('keydown', (e) => {{
   const files = document.querySelectorAll('.d2h-file-wrapper');
   if (!files.length) return;
 
-  if (e.key === 'j' || e.key === 'k') {{
+  if ((e.ctrlKey && e.key === 'n') || (e.ctrlKey && e.key === 'p')) {{
     e.preventDefault();
     let current = -1;
     for (let i = 0; i < files.length; i++) {{
       if (files[i].getBoundingClientRect().top <= 150) current = i;
     }}
     let target;
-    if (e.key === 'j') target = Math.min(current + 1, files.length - 1);
+    if (e.key === 'n') target = Math.min(current + 1, files.length - 1);
     else target = Math.max(current - 1, 0);
     files[target].scrollIntoView({{ behavior: 'smooth', block: 'start' }});
   }}
