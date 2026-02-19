@@ -317,6 +317,9 @@ kbd {{
   border-left: 2px solid transparent;
   word-break: break-all;
   line-height: 1.5;
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
   transition: background var(--transition), border-color var(--transition);
 }}
 .aj-file-item:hover {{
@@ -326,11 +329,57 @@ kbd {{
   background: var(--active-file-bg);
   border-left-color: var(--active-file-border);
 }}
+.aj-file-path {{
+  flex: 1;
+  min-width: 0;
+}}
 .aj-file-dir {{
   color: var(--fg-muted);
 }}
 .aj-file-name {{
   color: var(--fg);
+}}
+.aj-file-status {{
+  flex-shrink: 0;
+  font-size: 10px;
+  font-weight: 600;
+  font-family: var(--sans);
+  padding: 1px 5px;
+  border-radius: 4px;
+  line-height: 1.4;
+  margin-top: 1px;
+}}
+.aj-file-status.status-M {{
+  color: #9a6700;
+  background: rgba(154,103,0,0.1);
+}}
+.aj-file-status.status-A {{
+  color: #1a7f37;
+  background: rgba(26,127,55,0.1);
+}}
+.aj-file-status.status-D {{
+  color: #cf222e;
+  background: rgba(207,34,46,0.1);
+}}
+.aj-file-status.status-R {{
+  color: #6639ba;
+  background: rgba(102,57,186,0.1);
+}}
+[data-theme="dark"] .aj-file-status.status-M {{
+  color: #d29922;
+  background: rgba(210,153,34,0.12);
+}}
+[data-theme="dark"] .aj-file-status.status-A {{
+  color: #3fb950;
+  background: rgba(63,185,80,0.12);
+}}
+[data-theme="dark"] .aj-file-status.status-D {{
+  color: #f85149;
+  background: rgba(248,81,73,0.12);
+}}
+[data-theme="dark"] .aj-file-status.status-R {{
+  color: #a371f7;
+  background: rgba(163,113,247,0.12);
 }}
 
 /* Commits list */
@@ -617,14 +666,35 @@ function buildFileList() {{
     item.className = 'aj-file-item';
     item.dataset.index = i;
 
-    // Split into dir + filename
+    // Detect file status from diff2html's tag
+    const tagEl = w.querySelector('.d2h-tag');
+    const tagText = tagEl ? tagEl.textContent.trim().toUpperCase() : '';
+    let statusCode = 'M';
+    let statusLabel = 'M';
+    if (tagText.includes('ADDED') || tagText.includes('NEW')) {{
+      statusCode = 'A'; statusLabel = 'A';
+    }} else if (tagText.includes('DELETED') || tagText.includes('REMOVED')) {{
+      statusCode = 'D'; statusLabel = 'D';
+    }} else if (tagText.includes('RENAMED') || tagText.includes('MOVED')) {{
+      statusCode = 'R'; statusLabel = 'R';
+    }}
+
+    // Build: [path] [status badge]
+    const pathSpan = document.createElement('span');
+    pathSpan.className = 'aj-file-path';
     const lastSlash = fullPath.lastIndexOf('/');
     if (lastSlash >= 0) {{
-      item.innerHTML = '<span class="aj-file-dir">' + fullPath.substring(0, lastSlash + 1) + '</span>'
+      pathSpan.innerHTML = '<span class="aj-file-dir">' + fullPath.substring(0, lastSlash + 1) + '</span>'
         + '<span class="aj-file-name">' + fullPath.substring(lastSlash + 1) + '</span>';
     }} else {{
-      item.innerHTML = '<span class="aj-file-name">' + fullPath + '</span>';
+      pathSpan.innerHTML = '<span class="aj-file-name">' + fullPath + '</span>';
     }}
+    item.appendChild(pathSpan);
+
+    const badge = document.createElement('span');
+    badge.className = 'aj-file-status status-' + statusCode;
+    badge.textContent = statusLabel;
+    item.appendChild(badge);
 
     item.addEventListener('click', () => {{
       wrappers[i].scrollIntoView({{ behavior: 'smooth', block: 'start' }});
