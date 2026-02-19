@@ -34,42 +34,68 @@ HTML_TEMPLATE = """\
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/diff2html/bundles/css/diff2html.min.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/styles/github.min.css" id="hljs-light">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/styles/github-dark.min.css" id="hljs-dark" disabled>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 :root {{
   --bg: #ffffff;
-  --fg: #1f2328;
-  --header-bg: #f6f8fa;
-  --border: #d1d9e0;
-  --btn-bg: #f3f4f6;
-  --btn-hover: #e5e7eb;
+  --fg: #24292f;
+  --fg-muted: #656d76;
+  --header-bg: rgba(255,255,255,0.82);
+  --border: #e2e6ea;
+  --btn-bg: #f6f8fa;
+  --btn-hover: #ebeef1;
+  --btn-active-bg: #0550ae;
   --summary-bg: #f6f8fa;
-  --sidebar-bg: #f6f8fa;
+  --sidebar-bg: #f9fafb;
   --sidebar-width: 280px;
   --header-height: auto;
-  --active-file-bg: rgba(9,105,218,0.1);
-  --active-file-border: #0969da;
+  --active-file-bg: rgba(5,80,174,0.08);
+  --active-file-border: #0550ae;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 2px 8px rgba(0,0,0,0.06);
+  --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif;
+  --radius: 8px;
+  --transition: 150ms ease;
 }}
 [data-theme="dark"] {{
-  --bg: #0d1117;
-  --fg: #e6edf3;
-  --header-bg: #161b22;
-  --border: #30363d;
-  --btn-bg: #21262d;
-  --btn-hover: #30363d;
-  --summary-bg: #161b22;
-  --sidebar-bg: #161b22;
-  --active-file-bg: rgba(56,139,253,0.15);
-  --active-file-border: #58a6ff;
+  --bg: #0e1116;
+  --fg: #d4dae2;
+  --fg-muted: #7d8590;
+  --header-bg: rgba(14,17,22,0.82);
+  --border: #262c36;
+  --btn-bg: #1c2028;
+  --btn-hover: #272d38;
+  --btn-active-bg: #4184e4;
+  --summary-bg: #151921;
+  --sidebar-bg: #12161d;
+  --active-file-bg: rgba(65,132,228,0.12);
+  --active-file-border: #4184e4;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.2);
+  --shadow-md: 0 2px 8px rgba(0,0,0,0.3);
 }}
 * {{ box-sizing: border-box; }}
 html, body {{
   margin: 0;
   height: 100%;
   overflow: hidden;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif;
+  font-family: var(--sans);
   background: var(--bg);
   color: var(--fg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }}
+
+/* === Custom scrollbars === */
+::-webkit-scrollbar {{ width: 8px; height: 8px; }}
+::-webkit-scrollbar-track {{ background: transparent; }}
+::-webkit-scrollbar-thumb {{
+  background: var(--border);
+  border-radius: 4px;
+}}
+::-webkit-scrollbar-thumb:hover {{ background: var(--fg-muted); }}
 
 /* === Sticky header === */
 .aj-header {{
@@ -79,6 +105,8 @@ html, body {{
   right: 0;
   z-index: 100;
   background: var(--header-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--border);
 }}
 .aj-header-top {{
@@ -89,43 +117,52 @@ html, body {{
   flex-wrap: wrap;
 }}
 .aj-header h1 {{
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 600;
+  font-family: var(--mono);
+  letter-spacing: -0.01em;
   margin: 0;
   white-space: nowrap;
 }}
 .aj-header .aj-meta {{
-  font-size: 13px;
-  opacity: 0.7;
+  font-size: 12px;
+  color: var(--fg-muted);
 }}
 .aj-controls {{
   margin-left: auto;
   display: flex;
-  gap: 6px;
+  gap: 5px;
   align-items: center;
 }}
 .aj-btn {{
-  padding: 4px 10px;
+  padding: 5px 12px;
   font-size: 12px;
+  font-weight: 500;
+  font-family: var(--sans);
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: var(--radius);
   background: var(--btn-bg);
   color: var(--fg);
   cursor: pointer;
   white-space: nowrap;
+  transition: background var(--transition), border-color var(--transition), box-shadow var(--transition);
+  box-shadow: var(--shadow-sm);
 }}
-.aj-btn:hover {{ background: var(--btn-hover); }}
+.aj-btn:hover {{
+  background: var(--btn-hover);
+  box-shadow: var(--shadow-md);
+}}
 .aj-btn.active {{
-  background: #0969da;
+  background: var(--btn-active-bg);
   color: white;
-  border-color: #0969da;
+  border-color: var(--btn-active-bg);
+  box-shadow: 0 0 0 1px var(--btn-active-bg);
 }}
 .aj-current-file {{
-  padding: 4px 20px 8px;
-  font-size: 13px;
-  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
-  color: var(--fg);
-  opacity: 0.8;
+  padding: 5px 20px 7px;
+  font-size: 12px;
+  font-family: var(--mono);
+  color: var(--fg-muted);
   border-top: 1px solid var(--border);
   display: none;
 }}
@@ -134,18 +171,22 @@ html, body {{
 }}
 kbd {{
   display: inline-block;
-  padding: 1px 5px;
+  padding: 2px 5px;
   font-size: 11px;
-  font-family: ui-monospace, SFMono-Regular, monospace;
+  font-family: var(--mono);
+  line-height: 1;
   border: 1px solid var(--border);
-  border-radius: 3px;
+  border-radius: 4px;
   background: var(--btn-bg);
+  color: var(--fg-muted);
   vertical-align: middle;
+  box-shadow: var(--shadow-sm);
 }}
 .aj-keys {{
   font-size: 11px;
-  opacity: 0.5;
+  color: var(--fg-muted);
   white-space: nowrap;
+  opacity: 0.7;
 }}
 
 /* === Layout === */
@@ -175,9 +216,11 @@ kbd {{
   flex-direction: column;
   overflow: hidden;
   flex-shrink: 0;
+  transition: width var(--transition);
 }}
 .aj-sidebar.collapsed {{
   width: 0 !important;
+  border-right: none;
 }}
 .aj-sidebar.collapsed .aj-sidebar-content,
 .aj-sidebar.collapsed + .aj-resize-handle {{
@@ -191,6 +234,7 @@ kbd {{
   flex-shrink: 0;
   position: relative;
   z-index: 10;
+  transition: background var(--transition);
 }}
 .aj-resize-handle:hover,
 .aj-resize-handle.dragging {{
@@ -232,12 +276,13 @@ kbd {{
   display: none;
 }}
 .aj-section-header {{
-  padding: 8px 12px;
+  padding: 9px 14px;
   font-size: 11px;
   font-weight: 600;
+  font-family: var(--sans);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  opacity: 0.6;
+  letter-spacing: 0.04em;
+  color: var(--fg-muted);
   border-bottom: 1px solid var(--border);
   cursor: pointer;
   user-select: none;
@@ -245,12 +290,14 @@ kbd {{
   justify-content: space-between;
   align-items: center;
   flex-shrink: 0;
+  transition: color var(--transition);
 }}
 .aj-section-header:hover {{
-  opacity: 0.8;
+  color: var(--fg);
 }}
 .aj-section-toggle {{
-  font-size: 10px;
+  font-size: 9px;
+  opacity: 0.6;
 }}
 .aj-section-body {{
   overflow-y: auto;
@@ -260,13 +307,14 @@ kbd {{
 
 /* File list */
 .aj-file-item {{
-  padding: 5px 12px;
+  padding: 5px 14px;
   font-size: 12px;
-  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+  font-family: var(--mono);
   cursor: pointer;
-  border-left: 3px solid transparent;
+  border-left: 2px solid transparent;
   word-break: break-all;
-  line-height: 1.4;
+  line-height: 1.5;
+  transition: background var(--transition), border-color var(--transition);
 }}
 .aj-file-item:hover {{
   background: var(--btn-hover);
@@ -276,24 +324,24 @@ kbd {{
   border-left-color: var(--active-file-border);
 }}
 .aj-file-dir {{
-  opacity: 0.5;
+  color: var(--fg-muted);
 }}
 .aj-file-name {{
-  opacity: 1;
+  color: var(--fg);
 }}
 
 /* Commits list */
 .aj-commit-item {{
-  padding: 4px 12px;
+  padding: 4px 14px;
   font-size: 11px;
-  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+  font-family: var(--mono);
   line-height: 1.5;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }}
 .aj-commit-hash {{
-  opacity: 0.5;
+  color: var(--fg-muted);
 }}
 
 /* === Main content === */
@@ -303,8 +351,10 @@ kbd {{
   min-width: 0;
 }}
 #diff-container {{
-  padding: 16px 20px 40px;
+  padding: 12px 16px 40px;
 }}
+
+/* === diff2html overrides === */
 
 /* Hide diff2html's built-in file list — we have our own sidebar */
 .d2h-file-list-wrapper {{
@@ -315,10 +365,32 @@ kbd {{
 .d2h-code-side-linenumber {{
   position: static !important;
 }}
+
+/* File wrapper cards */
+.d2h-file-wrapper {{
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius) !important;
+  overflow: hidden;
+  margin-bottom: 12px !important;
+  box-shadow: var(--shadow-sm);
+}}
+.d2h-file-header {{
+  background: var(--sidebar-bg) !important;
+  border-bottom: 1px solid var(--border) !important;
+  padding: 8px 12px !important;
+}}
+.d2h-file-header .d2h-file-name-wrapper {{
+  font-family: var(--mono) !important;
+  font-size: 12px !important;
+}}
+
 /* Fix sub-pixel hairlines between diff rows */
 .d2h-diff-table {{
   border-collapse: collapse !important;
   border-spacing: 0 !important;
+  font-family: var(--mono) !important;
+  font-size: 12px !important;
+  line-height: 1.45 !important;
 }}
 .d2h-diff-tbody {{
   border: none !important;
@@ -341,65 +413,110 @@ kbd {{
 .d2h-code-linenumber,
 .d2h-code-side-linenumber {{
   border-right: 1px solid var(--border) !important;
-  padding: 0 6px !important;
+  padding: 0 8px !important;
+  font-size: 11px !important;
+  color: var(--fg-muted) !important;
+  min-width: 40px !important;
+  text-align: right !important;
 }}
 /* Make code line divs fill cells fully */
 .d2h-code-line,
 .d2h-code-side-line {{
-  padding: 0 10px !important;
+  padding: 0 12px !important;
 }}
 /* Fix empty placeholder cells showing wrong color */
 .d2h-emptyplaceholder {{
   background: var(--bg) !important;
 }}
+/* Info/hunk header rows */
+.d2h-info {{
+  background: var(--sidebar-bg) !important;
+  color: var(--fg-muted) !important;
+}}
 
-/* Dark theme overrides for diff2html */
+/* === Light theme diff colors === */
+.d2h-del {{
+  background-color: #fff0ee !important;
+}}
+.d2h-ins {{
+  background-color: #ecfdf0 !important;
+}}
+.d2h-del .d2h-code-line-ctn,
+.d2h-del .d2h-code-side-line {{
+  background-color: #fff0ee !important;
+}}
+.d2h-ins .d2h-code-line-ctn,
+.d2h-ins .d2h-code-side-line {{
+  background-color: #ecfdf0 !important;
+}}
+/* Inline word-level highlights */
+.d2h-del .d2h-code-line-ctn del,
+.d2h-del .d2h-code-side-line del {{
+  background-color: rgba(255,100,80,0.22) !important;
+}}
+.d2h-ins .d2h-code-line-ctn ins,
+.d2h-ins .d2h-code-side-line ins {{
+  background-color: rgba(40,180,80,0.20) !important;
+}}
+
+/* === Dark theme overrides for diff2html === */
 [data-theme="dark"] .d2h-wrapper {{
-  --d2h-bg-color: #0d1117;
-  --d2h-border-color: #30363d;
+  --d2h-bg-color: #0e1116;
+  --d2h-border-color: #262c36;
+}}
+[data-theme="dark"] .d2h-file-wrapper {{
+  border-color: var(--border) !important;
 }}
 [data-theme="dark"] .d2h-file-header {{
-  background: #161b22 !important;
-  border-color: #30363d !important;
+  background: var(--sidebar-bg) !important;
+  border-color: var(--border) !important;
 }}
 [data-theme="dark"] .d2h-file-header .d2h-file-name {{
-  color: #e6edf3 !important;
+  color: var(--fg) !important;
 }}
 [data-theme="dark"] .d2h-code-linenumber,
 [data-theme="dark"] .d2h-code-side-linenumber {{
-  background: #161b22 !important;
-  color: #8b949e !important;
-  border-color: #30363d !important;
+  background: #151921 !important;
+  color: #4a5163 !important;
+  border-color: var(--border) !important;
 }}
 [data-theme="dark"] .d2h-code-line,
 [data-theme="dark"] .d2h-code-side-line {{
-  background: #0d1117 !important;
-  color: #e6edf3 !important;
+  background: #0e1116 !important;
+  color: #d4dae2 !important;
 }}
 [data-theme="dark"] .d2h-del {{
-  background-color: rgba(248,81,73,0.15) !important;
+  background-color: rgba(248,81,73,0.12) !important;
 }}
 [data-theme="dark"] .d2h-ins {{
-  background-color: rgba(63,185,80,0.15) !important;
+  background-color: rgba(63,185,80,0.12) !important;
 }}
 [data-theme="dark"] .d2h-del .d2h-code-line-ctn,
 [data-theme="dark"] .d2h-del .d2h-code-side-line {{
-  background-color: rgba(248,81,73,0.15) !important;
+  background-color: rgba(248,81,73,0.12) !important;
 }}
 [data-theme="dark"] .d2h-ins .d2h-code-line-ctn,
 [data-theme="dark"] .d2h-ins .d2h-code-side-line {{
-  background-color: rgba(63,185,80,0.15) !important;
+  background-color: rgba(63,185,80,0.12) !important;
+}}
+[data-theme="dark"] .d2h-del .d2h-code-line-ctn del,
+[data-theme="dark"] .d2h-del .d2h-code-side-line del {{
+  background-color: rgba(248,81,73,0.28) !important;
+}}
+[data-theme="dark"] .d2h-ins .d2h-code-line-ctn ins,
+[data-theme="dark"] .d2h-ins .d2h-code-side-line ins {{
+  background-color: rgba(63,185,80,0.25) !important;
 }}
 [data-theme="dark"] .d2h-info {{
-  background: #161b22 !important;
-  color: #8b949e !important;
-  border-color: #30363d !important;
+  background: #151921 !important;
+  color: #4a5163 !important;
+  border-color: var(--border) !important;
 }}
 [data-theme="dark"] .d2h-file-diff .d2h-del.d2h-change {{
-  background-color: rgba(248,81,73,0.15) !important;
+  background-color: rgba(248,81,73,0.12) !important;
 }}
 [data-theme="dark"] .d2h-file-diff .d2h-ins.d2h-change {{
-  background-color: rgba(63,185,80,0.15) !important;
+  background-color: rgba(63,185,80,0.12) !important;
 }}
 </style>
 </head>
