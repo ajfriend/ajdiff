@@ -317,10 +317,13 @@ kbd {{
 }}
 /* Fix sub-pixel hairlines between diff rows */
 .d2h-diff-table {{
-  border-collapse: separate !important;
+  border-collapse: collapse !important;
   border-spacing: 0 !important;
 }}
 .d2h-diff-tbody {{
+  border: none !important;
+}}
+.d2h-diff-table tr {{
   border: none !important;
 }}
 .d2h-ins,
@@ -329,19 +332,25 @@ kbd {{
 .d2h-info {{
   border: none !important;
 }}
-.d2h-ins td,
-.d2h-del td,
-.d2h-cntx td {{
+/* Kill the 1px cell padding that creates visible gaps */
+.d2h-diff-table td {{
   border: none !important;
+  padding: 0 !important;
 }}
-/* Carry row background onto cells so no gaps show through */
-.d2h-ins td {{ background-color: inherit !important; }}
-.d2h-del td {{ background-color: inherit !important; }}
-.d2h-cntx td {{ background-color: inherit !important; }}
 /* Restore just the line-number right separator */
 .d2h-code-linenumber,
 .d2h-code-side-linenumber {{
   border-right: 1px solid var(--border) !important;
+  padding: 0 6px !important;
+}}
+/* Make code line divs fill cells fully */
+.d2h-code-line,
+.d2h-code-side-line {{
+  padding: 0 10px !important;
+}}
+/* Fix empty placeholder cells showing wrong color */
+.d2h-emptyplaceholder {{
+  background: var(--bg) !important;
 }}
 
 /* Dark theme overrides for diff2html */
