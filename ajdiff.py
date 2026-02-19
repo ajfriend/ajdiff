@@ -1160,6 +1160,19 @@ def is_git_repo() -> bool:
     return result.returncode == 0
 
 
+def get_default_branch() -> str:
+    """Detect the default branch (main, master, etc.)."""
+    # Try the remote HEAD first
+    result = git("symbolic-ref", "refs/remotes/origin/HEAD")
+    if result.returncode == 0:
+        return result.stdout.strip().removeprefix("refs/remotes/origin/")
+    # Fall back to checking common names
+    for name in ("main", "master"):
+        if git("rev-parse", "--verify", name).returncode == 0:
+            return name
+    return "main"
+
+
 def get_merge_base(base: str, head: str) -> str | None:
     result = git("merge-base", base, head)
     if result.returncode != 0:
@@ -1185,9 +1198,9 @@ def parse_diff_stats(diff_text: str) -> tuple[int, int, int]:
 @app.command()
 def main(
     base: Annotated[
-        str,
-        typer.Argument(help="Base ref to diff against (default: master)."),
-    ] = "master",
+        Optional[str],
+        typer.Argument(help="Base ref to diff against (default: auto-detected)."),
+    ] = None,
     head: Annotated[
         str,
         typer.Argument(help="Head ref (default: HEAD)."),
@@ -1205,7 +1218,7 @@ def main(
 
     \b
     Examples:
-        ajdiff                     # diff current branch vs master
+        ajdiff                     # diff current branch vs main/master
         ajdiff main                # diff current branch vs main
         ajdiff v4.0.0              # diff current branch vs a tag
         ajdiff feature-a feature-b # diff between two refs
@@ -1213,6 +1226,9 @@ def main(
     if not is_git_repo():
         console.print("[bold red]Error:[/] not inside a git repository.")
         raise typer.Exit(1)
+
+    if base is None:
+        base = get_default_branch()
 
     # Get the diff
     with console.status("[bold]Running git diff..."):
