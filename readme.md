@@ -5,7 +5,13 @@ A local Git diff viewer that opens a GitHub-PR-like side-by-side diff in your br
 ## Usage
 
 ```bash
-uv run ajdiff.py                     # diff current branch vs master
+uv run https://raw.githubusercontent.com/ajfriend/ajdiff/main/ajdiff.py
+```
+
+Or clone the repo and run locally:
+
+```bash
+uv run ajdiff.py                     # diff current branch vs main/master
 uv run ajdiff.py main                # diff current branch vs main
 uv run ajdiff.py v4.0.0              # diff current branch vs a tag
 uv run ajdiff.py feature-a feature-b # diff between two refs
