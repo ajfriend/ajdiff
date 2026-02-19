@@ -40,15 +40,15 @@ HTML_TEMPLATE = """\
 <style>
 :root {{
   --bg: #ffffff;
-  --fg: #24292f;
-  --fg-muted: #656d76;
+  --fg: #1b1f24;
+  --fg-muted: #545d68;
   --header-bg: rgba(255,255,255,0.82);
-  --border: #e2e6ea;
-  --btn-bg: #f6f8fa;
-  --btn-hover: #ebeef1;
+  --border: #d4d8de;
+  --btn-bg: #f0f2f5;
+  --btn-hover: #e4e7eb;
   --btn-active-bg: #0550ae;
-  --summary-bg: #f6f8fa;
-  --sidebar-bg: #f9fafb;
+  --summary-bg: #f0f2f5;
+  --sidebar-bg: #f5f6f8;
   --sidebar-width: 280px;
   --header-height: auto;
   --active-file-bg: rgba(5,80,174,0.08);
@@ -416,6 +416,7 @@ kbd {{
   padding: 0 8px !important;
   font-size: 11px !important;
   color: var(--fg-muted) !important;
+  background: var(--sidebar-bg) !important;
   min-width: 40px !important;
   text-align: right !important;
 }}
@@ -436,27 +437,32 @@ kbd {{
 
 /* === Light theme diff colors === */
 .d2h-del {{
-  background-color: #fff0ee !important;
+  background-color: #ffebe9 !important;
 }}
 .d2h-ins {{
-  background-color: #ecfdf0 !important;
+  background-color: #dafbe1 !important;
 }}
 .d2h-del .d2h-code-line-ctn,
 .d2h-del .d2h-code-side-line {{
-  background-color: #fff0ee !important;
+  background-color: #ffebe9 !important;
 }}
 .d2h-ins .d2h-code-line-ctn,
 .d2h-ins .d2h-code-side-line {{
-  background-color: #ecfdf0 !important;
+  background-color: #dafbe1 !important;
 }}
 /* Inline word-level highlights */
 .d2h-del .d2h-code-line-ctn del,
 .d2h-del .d2h-code-side-line del {{
-  background-color: rgba(255,100,80,0.22) !important;
+  background-color: rgba(255,80,60,0.28) !important;
 }}
 .d2h-ins .d2h-code-line-ctn ins,
 .d2h-ins .d2h-code-side-line ins {{
-  background-color: rgba(40,180,80,0.20) !important;
+  background-color: rgba(30,170,70,0.25) !important;
+}}
+/* Light mode code text needs to be dark */
+.d2h-code-line,
+.d2h-code-side-line {{
+  color: #1b1f24 !important;
 }}
 
 /* === Dark theme overrides for diff2html === */
