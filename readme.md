@@ -15,6 +15,7 @@ uv run ajdiff.py                     # diff current branch vs main/master
 uv run ajdiff.py main                # diff current branch vs main
 uv run ajdiff.py v4.0.0              # diff current branch vs a tag
 uv run ajdiff.py feature-a feature-b # diff between two refs
+uv run ajdiff.py origin/main         # diff local vs remote main
 ```
 
 ## Features
