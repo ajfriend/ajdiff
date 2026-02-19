@@ -222,6 +222,9 @@ kbd {{
   width: 0 !important;
   border-right: none;
 }}
+.aj-sidebar.no-transition {{
+  transition: none;
+}}
 .aj-sidebar.collapsed .aj-sidebar-content,
 .aj-sidebar.collapsed + .aj-resize-handle {{
   display: none;
@@ -349,6 +352,10 @@ kbd {{
   flex: 1;
   overflow-y: auto;
   min-width: 0;
+}}
+/* Hide diff content during sidebar resize to avoid expensive reflow */
+.aj-main.resizing #diff-container {{
+  display: none;
 }}
 #diff-container {{
   padding: 12px 16px 40px;
@@ -732,29 +739,57 @@ document.addEventListener('keydown', (e) => {{
 (function() {{
   const handle = document.getElementById('resize-handle');
   const sidebar = document.getElementById('sidebar');
+  const main = document.getElementById('main-scroll');
   let dragging = false;
+  let rafPending = false;
+  let pendingWidth = 0;
+  let activeFileIdx = 0;
+  let scrollOffsetInFile = 0;
 
   handle.addEventListener('mousedown', (e) => {{
     e.preventDefault();
+    // Remember which file and scroll offset within it
+    const wrappers = document.querySelectorAll('.d2h-file-wrapper');
+    const mainTop = main.getBoundingClientRect().top;
+    for (let i = 0; i < wrappers.length; i++) {{
+      if (wrappers[i].getBoundingClientRect().top <= mainTop) activeFileIdx = i;
+    }}
+    scrollOffsetInFile = mainTop - wrappers[activeFileIdx].getBoundingClientRect().top;
     dragging = true;
     handle.classList.add('dragging');
+    main.classList.add('resizing');
+    sidebar.classList.add('no-transition');
     document.body.style.cursor = 'col-resize';
     document.body.style.userSelect = 'none';
   }});
 
   document.addEventListener('mousemove', (e) => {{
     if (!dragging) return;
-    const newWidth = Math.max(120, Math.min(e.clientX, window.innerWidth - 200));
-    sidebar.style.width = newWidth + 'px';
+    pendingWidth = Math.max(120, Math.min(e.clientX, window.innerWidth - 200));
+    if (!rafPending) {{
+      rafPending = true;
+      requestAnimationFrame(() => {{
+        sidebar.style.width = pendingWidth + 'px';
+        rafPending = false;
+      }});
+    }}
   }});
 
   document.addEventListener('mouseup', () => {{
     if (!dragging) return;
     dragging = false;
     handle.classList.remove('dragging');
+    main.classList.remove('resizing');
+    sidebar.classList.remove('no-transition');
     document.body.style.cursor = '';
     document.body.style.userSelect = '';
     localStorage.setItem('ajdiff-sidebar-width', sidebar.style.width);
+    // Restore scroll to the exact position within the file
+    const wrappers = document.querySelectorAll('.d2h-file-wrapper');
+    if (wrappers[activeFileIdx]) {{
+      wrappers[activeFileIdx].scrollIntoView({{ block: 'start' }});
+      main.scrollTop += scrollOffsetInFile;
+    }}
   }});
 }})();
 
