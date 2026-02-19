@@ -415,16 +415,35 @@ kbd {{
 
 /* Commits list */
 .aj-commit-item {{
-  padding: 4px 14px;
+  padding: 6px 14px;
   font-size: 11px;
   font-family: var(--mono);
-  line-height: 1.5;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  line-height: 1.4;
+  border-bottom: 1px solid var(--border);
+}}
+.aj-commit-item:last-child {{
+  border-bottom: none;
+}}
+.aj-commit-top {{
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
 }}
 .aj-commit-hash {{
   color: var(--fg-muted);
+}}
+.aj-commit-date {{
+  color: var(--fg-muted);
+  font-size: 10px;
+  white-space: nowrap;
+}}
+.aj-commit-msg {{
+  margin-top: 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--fg);
 }}
 
 /* === Main content === */
@@ -439,6 +458,72 @@ kbd {{
 }}
 #diff-container {{
   padding: 12px 16px 40px;
+}}
+
+/* === Context menu === */
+.aj-context-menu {{
+  position: fixed;
+  z-index: 200;
+  background: var(--sidebar-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-md), 0 4px 16px rgba(0,0,0,0.12);
+  padding: 4px;
+  min-width: 200px;
+  font-size: 13px;
+  font-family: var(--sans);
+  display: none;
+}}
+.aj-context-menu.visible {{
+  display: block;
+}}
+.aj-context-menu-item {{
+  padding: 6px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--fg);
+  transition: background var(--transition);
+}}
+.aj-context-menu-item:hover {{
+  background: var(--btn-hover);
+}}
+.aj-context-menu-icon {{
+  opacity: 0.5;
+  font-size: 14px;
+  width: 16px;
+  text-align: center;
+}}
+.aj-context-menu-shortcut {{
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--fg-muted);
+}}
+
+/* === Toast === */
+.aj-toast {{
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--fg);
+  color: var(--bg);
+  padding: 8px 16px;
+  border-radius: var(--radius);
+  font-size: 13px;
+  font-family: var(--sans);
+  box-shadow: var(--shadow-md);
+  opacity: 0;
+  transition: opacity 200ms ease, transform 200ms ease;
+  pointer-events: none;
+  z-index: 300;
+  white-space: nowrap;
+}}
+.aj-toast.visible {{
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
 }}
 
 /* === diff2html overrides === */
@@ -658,11 +743,83 @@ kbd {{
   </div>
 </div>
 
+<div class="aj-context-menu" id="context-menu">
+  <div class="aj-context-menu-item" id="ctx-copy-subl">
+    <span class="aj-context-menu-icon">&#9998;</span>
+    Copy subl command
+  </div>
+  <div class="aj-context-menu-item" id="ctx-copy-path">
+    <span class="aj-context-menu-icon">&#128203;</span>
+    Copy file path
+  </div>
+</div>
+<div class="aj-toast" id="toast"></div>
+
 <script src="https://cdn.jsdelivr.net/npm/diff2html/bundles/js/diff2html-ui.min.js"></script>
 <script>
 const diffString = {diff_json};
+const repoRoot = {repo_root};
 let currentView = 'side-by-side';
 const mainScroll = document.getElementById('main-scroll');
+
+/* === Context menu + toast === */
+(function() {{
+  const menu = document.getElementById('context-menu');
+  const toast = document.getElementById('toast');
+  let contextFilePath = '';
+  let toastTimer = null;
+
+  function showToast(msg) {{
+    toast.textContent = msg;
+    toast.classList.add('visible');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.remove('visible'), 2000);
+  }}
+
+  function copyText(text) {{
+    navigator.clipboard.writeText(text).then(() => {{}}).catch(() => {{}});
+  }}
+
+  document.addEventListener('contextmenu', (e) => {{
+    const fileItem = e.target.closest('.aj-file-item');
+    if (!fileItem) return;
+    e.preventDefault();
+
+    const idx = parseInt(fileItem.dataset.index, 10);
+    const wrapper = document.querySelectorAll('.d2h-file-wrapper')[idx];
+    const nameEl = wrapper?.querySelector('.d2h-file-name');
+    contextFilePath = nameEl ? nameEl.textContent.trim() : '';
+
+    menu.style.left = e.clientX + 'px';
+    menu.style.top = e.clientY + 'px';
+    menu.classList.add('visible');
+
+    requestAnimationFrame(() => {{
+      const rect = menu.getBoundingClientRect();
+      if (rect.right > window.innerWidth) menu.style.left = (window.innerWidth - rect.width - 8) + 'px';
+      if (rect.bottom > window.innerHeight) menu.style.top = (window.innerHeight - rect.height - 8) + 'px';
+    }});
+  }});
+
+  document.addEventListener('click', () => menu.classList.remove('visible'));
+  document.addEventListener('keydown', (e) => {{ if (e.key === 'Escape') menu.classList.remove('visible'); }});
+
+  document.getElementById('ctx-copy-subl').addEventListener('click', () => {{
+    if (!contextFilePath || !repoRoot) return;
+    const fullPath = repoRoot + '/' + contextFilePath;
+    copyText('subl ' + fullPath);
+    showToast('Copied: subl ' + contextFilePath);
+    menu.classList.remove('visible');
+  }});
+
+  document.getElementById('ctx-copy-path').addEventListener('click', () => {{
+    if (!contextFilePath || !repoRoot) return;
+    const fullPath = repoRoot + '/' + contextFilePath;
+    copyText(fullPath);
+    showToast('Copied: ' + contextFilePath);
+    menu.classList.remove('visible');
+  }});
+}})();
 
 function render(view) {{
   currentView = view;
@@ -1078,8 +1235,12 @@ def main(
         f"[green]+{additions}[/] / [red]-{deletions}[/]"
     )
 
-    # Commit log
-    log_result = git("log", "--oneline", f"{base}..{head}")
+    # Repo root for editor integration
+    root_result = git("rev-parse", "--show-toplevel")
+    repo_root = root_result.stdout.strip() if root_result.returncode == 0 else ""
+
+    # Commit log (hash, relative date, subject)
+    log_result = git("log", "--format=%h\t%ar\t%s", f"{base}..{head}")
     commits_text = log_result.stdout.strip() if log_result.returncode == 0 else ""
     num_commits = len(commits_text.splitlines()) if commits_text else 0
 
@@ -1094,12 +1255,17 @@ def main(
     if commits_text:
         for line in commits_text.splitlines():
             escaped = line.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
-            parts = escaped.split(" ", 1)
-            hash_part = parts[0]
-            msg_part = parts[1] if len(parts) > 1 else ""
+            parts = escaped.split("\t", 2)
+            hash_part = parts[0] if len(parts) > 0 else ""
+            date_part = parts[1] if len(parts) > 1 else ""
+            msg_part = parts[2] if len(parts) > 2 else ""
             commits_html += (
                 f'<div class="aj-commit-item">'
-                f'<span class="aj-commit-hash">{hash_part}</span> {msg_part}'
+                f'<div class="aj-commit-top">'
+                f'<span class="aj-commit-hash">{hash_part}</span>'
+                f'<span class="aj-commit-date">{date_part}</span>'
+                f'</div>'
+                f'<div class="aj-commit-msg">{msg_part}</div>'
                 f'</div>'
             )
 
@@ -1109,6 +1275,7 @@ def main(
         num_commits=num_commits,
         commits_html=commits_html,
         diff_json=json.dumps(diff_text),
+        repo_root=json.dumps(repo_root),
     )
 
     # Write output
