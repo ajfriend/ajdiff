@@ -315,6 +315,34 @@ kbd {{
 .d2h-code-side-linenumber {{
   position: static !important;
 }}
+/* Fix sub-pixel hairlines between diff rows */
+.d2h-diff-table {{
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+}}
+.d2h-diff-tbody {{
+  border: none !important;
+}}
+.d2h-ins,
+.d2h-del,
+.d2h-cntx,
+.d2h-info {{
+  border: none !important;
+}}
+.d2h-ins td,
+.d2h-del td,
+.d2h-cntx td {{
+  border: none !important;
+}}
+/* Carry row background onto cells so no gaps show through */
+.d2h-ins td {{ background-color: inherit !important; }}
+.d2h-del td {{ background-color: inherit !important; }}
+.d2h-cntx td {{ background-color: inherit !important; }}
+/* Restore just the line-number right separator */
+.d2h-code-linenumber,
+.d2h-code-side-linenumber {{
+  border-right: 1px solid var(--border) !important;
+}}
 
 /* Dark theme overrides for diff2html */
 [data-theme="dark"] .d2h-wrapper {{
