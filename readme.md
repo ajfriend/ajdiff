@@ -18,7 +18,7 @@ uv run ajdiff.py feature-a feature-b # diff between two refs
 - Syntax highlighting via highlight.js
 - Dark and light themes (respects system preference, toggle with Theme button)
 - Keyboard navigation: `Ctrl-n` / `Ctrl-p` to jump between files, `b` to toggle sidebar
-- Resizable sidebar with drag handle
+- Resizable sidebar
 - Commit list with timestamps
 - Right-click files to copy `subl` command or file path
 
@@ -29,10 +29,6 @@ uv run ajdiff.py feature-a feature-b # diff between two refs
 | `--output`  | Save HTML to a specific path instead of a tempfile |
 | `--no-open` | Print the file path without opening the browser    |
 
-## Requirements
-
-- [uv](https://docs.astral.sh/uv/)
-- Git
 
 ## References
 
